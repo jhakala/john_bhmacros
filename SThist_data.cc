@@ -4,6 +4,9 @@
 #include "TH2.h"
 #include "TF1.h"
 #include "TF2.h"
+#include "TBranch.h"
+#include "TFile.h"
+#include "TChain.h"
 #include "TCanvas.h"
 #include "TPad.h"
 #include <fstream>
