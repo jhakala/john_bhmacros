@@ -20,8 +20,8 @@ void SThist_data(std::string inFilename, std::string outFilename) {
   TH1F stHist = TH1F("stHist", "ST", 100, 700, 9700);
   int multMax = 12;
 
-  TH1F *stIncHist = new TH1F[multMax-2];  
-  TH1F *stExcHist = new TH1F[multMax-2];  
+  TH1F *stIncHist[multMax-2];
+  TH1F *stExcHist[multMax-2];
   char *histTitle = new char[11];
   int multiplicity=2;
   // loop to create ST histograms for inclusive and exclusive multiplicities from 2 up to multMax
@@ -262,8 +262,8 @@ void SThist_data(std::string inFilename, std::string outFilename) {
 		//cout << "    mult is: " << mult << endl;
 		stHist.Fill(ST);
     for (int iHist = 0; iHist<multMax-2; ++iHist) {
-      if (mult == iHist+2) stExcHist[iHist].Fill(ST);
-      if (mult >= iHist+2) stIncHist[iHist].Fill(ST);
+      if (mult == iHist+2) stExcHist[iHist]->Fill(ST);
+      if (mult >= iHist+2) stIncHist[iHist]->Fill(ST);
     }
 		nPassedEvents+=1;
 	}
@@ -271,8 +271,8 @@ void SThist_data(std::string inFilename, std::string outFilename) {
   outfile->cd();
   stHist.Write();
   for (int iHist = 0; iHist<multMax-2; ++iHist) {
-    stExcHist[iHist].Write();
-    stIncHist[iHist].Write();
+    stExcHist[iHist]->Write();
+    stIncHist[iHist]->Write();
   }
   //
   // clean up
