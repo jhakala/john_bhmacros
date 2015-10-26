@@ -4,7 +4,7 @@ import os
 import shutil
 
 def callMacro(macroName, inputFile, outputFile):
-	macroCommand = "%s(\"%s\", \"%s\")" % (macroName, inputFile, outputFile)
+	macroCommand = "%s+(\"%s\", \"%s\")" % (macroName, inputFile, outputFile)
 	subprocess.call(["root", "-l", "-q", macroCommand])
 
 def splitJobsForBsub(dataOrMC, inputFile, numberOfJobs):
