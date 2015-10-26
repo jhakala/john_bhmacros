@@ -49,7 +49,7 @@ def bSubSplitJobs(pyScriptName, dataOrMC, inputFile, numberOfJobs):
 	print "Prepared %i jobs ready to be submitted to bsub." % nJobs
 	for i in range (1, numberOfJobs+1):
 		splitListFile="split_%i_%s" % (i , inputFile)
-		pyCommand = "python " + pyScriptName + " splitLists/" + splitListFile + " " + "output/" + pyScriptName + "-output_%i-" %i + inputFile + ".root"
+		pyCommand = "python " + pyScriptName + " splitLists/" + splitListFile + " "  + pyScriptName + "-output_%i-" %i + inputFile + ".root"
 		if dataOrMC == "mc":
 			pyCommand = pyCommand + " " + lumiNorm
 		makeBsubShellScript(pyCommand, samplesListsDir+"/splitLists/"+splitListFile, pyScriptName, i)
@@ -57,9 +57,8 @@ def bSubSplitJobs(pyScriptName, dataOrMC, inputFile, numberOfJobs):
 def makeBsubShellScript(pyCommand, splitListName, pyScriptName, index):
 	f = open("bsubs/bsub-%s-%s.sh" % (pyScriptName, index), "w")
 	f.write("#!/bin/bash\n")
-	f.write("source /cvmfs/cms.cern.ch/cmsset_default.sh\n")
 	f.write("cd " + os.getcwd()+"\n")
-	f.write("source bhSetup.sh /afs/cern.ch/user/j/johakala/work/public/CMSSW_7_4_14/src\n")
+	f.write("source BsubBHsetup.sh\n")
 	f.write(pyCommand)
 	f.close()
 	os.chmod("bsubs/bsub-%s-%s.sh" % (pyScriptName, index), 0777)

@@ -18,10 +18,27 @@ void SThist_data(std::string inFilename, std::string outFilename) {
   // define output file and output histogram
   TFile *outfile = new TFile(outFilename.c_str(),"RECREATE");
   TH1F stHist = TH1F("stHist", "ST", 100, 700, 9700);
+  int multMax = 12;
 
+  TH1F *stIncHist = new TH1F[multMax-2];  
+  TH1F *stExcHist = new TH1F[multMax-2];  
+  char *histTitle = new char[11];
+  int multiplicity=2;
+  // loop to create ST histograms for inclusive and exclusive multiplicities from 2 up to multMax
+  for (int iHist = 0; iHist<multMax-2; ++iHist) {
+    sprintf(histTitle, "stInc%02dHist", multiplicity);
+    stIncHist[iHist] = new TH1F(histTitle, "Inclusive ST", 100, 700, 9700);
+    sprintf(histTitle, "stExc%02dHist", multiplicity);
+    stExcHist[iHist] = new TH1F(histTitle, "Exclusive ST", 100, 700, 9700);
+    ++multiplicity;
+  }
   // variables calculated in the loop
 	int NJets         = 0    ;
+	int NEles         = 0    ;
+	int NPhos         = 0    ;
+	int NMuos         = 0    ;
 	float ST          = 0.   ;
+  int mult          = 0    ;
 	bool passIso      = true ;
 	int nPassedEvents = 0    ;
 
@@ -60,7 +77,7 @@ void SThist_data(std::string inFilename, std::string outFilename) {
   //create a chain by looping over the input filename
 	TChain chain("bhana/t");
   ifstream infile;
-  infile.open(filename.c_str()); 
+  infile.open(inFilename.c_str()); 
   std::string buffer;
   const char *eosURL = "root://eoscms.cern.ch/";
   while (std::getline(infile, buffer)) {
@@ -98,7 +115,11 @@ void SThist_data(std::string inFilename, std::string outFilename) {
     // reset variables
 		ST      = 0.   ;
 		NJets   = 0    ;
+		NEles   = 0    ;
+		NPhos   = 0    ;
+		NMuos   = 0    ;
 		passIso = true ;
+    mult    = 0    ;
  
 		chain.GetEntry(iEvent);
     // apply trigger and filter requirements
@@ -166,6 +187,7 @@ void SThist_data(std::string inFilename, std::string outFilename) {
 				if (!passIso) continue;
 
 				//cout << "    ElePt for electron number " << iElectron << " is: " << ElePt[iElectron] << endl;
+        ++NEles;
 				ST += ElePt[iElectron];
 			}
 			else break;
@@ -197,6 +219,7 @@ void SThist_data(std::string inFilename, std::string outFilename) {
 				if (!passIso) continue;
 
 				//cout << "    PhPt for photon number " << iPhoton << " is: " << PhPt[iPhoton] << endl;
+        ++NPhos;
 				ST += PhPt[iPhoton];
 			}
 			else break;
@@ -228,19 +251,29 @@ void SThist_data(std::string inFilename, std::string outFilename) {
 				if (!passIso) continue;
 
 				//cout << "    MuPt for muon number " << iMuon << " is: " << MuPt[iMuon] << endl;
+        ++NMuos;
 				ST += MuPt[iMuon];
 			}
 			else break;
 		}
 		//
 		//cout << "    ST is: " << ST << endl;
+    mult = NJets + NEles + NPhos + NMuos;
+		//cout << "    mult is: " << mult << endl;
 		stHist.Fill(ST);
+    for (int iHist = 0; iHist<multMax-2; ++iHist) {
+      if (mult == iHist+2) stExcHist[iHist].Fill(ST);
+      if (mult >= iHist+2) stIncHist[iHist].Fill(ST);
+    }
 		nPassedEvents+=1;
-		//if (nPassedEvents==5) break;
 	}
   // write the histogram and the output file
   outfile->cd();
   stHist.Write();
+  for (int iHist = 0; iHist<multMax-2; ++iHist) {
+    stExcHist[iHist].Write();
+    stIncHist[iHist].Write();
+  }
   //
   // clean up
 	delete[] JetPt;
