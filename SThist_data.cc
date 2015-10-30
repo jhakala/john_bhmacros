@@ -47,23 +47,23 @@ void SThist_data(std::string inFilename, std::string outFilename) {
   int nPassedEvents = 0    ;
 
   // variables accessed from the tree
-  Char_t firedHLT_PFHT800_v2       ;
-  Char_t passed_CSCTightHaloFilter ;
-  Char_t passed_goodVertices       ;
-  Char_t passed_eeBadScFilter      ;
-  float    JetPt[15]               ;
-  float    JetEta[15]              ;
-  float    JetPhi[15]              ;
-  float    ElePt[25]               ;
-  float    EleEta[25]              ;
-  float    ElePhi[25]              ;
-  float    PhPt[25]                ;
-  float    PhEta[25]               ;
-  float    PhPhi[25]               ;
-  float    MuPt[25]                ;
-  float    MuEta[25]               ;
-  float    MuPhi[25]               ;
-  float    MetPt                   ; 
+  Bool_t firedHLT_PFHT800_v2       ;
+  Bool_t passed_CSCTightHaloFilter ;
+  Bool_t passed_goodVertices       ;
+  Bool_t passed_eeBadScFilter      ;
+  Float_t    JetPt[15]               ;
+  Float_t    JetEta[15]              ;
+  Float_t    JetPhi[15]              ;
+  Float_t    ElePt[25]               ;
+  Float_t    EleEta[25]              ;
+  Float_t    ElePhi[25]              ;
+  Float_t    PhPt[25]                ;
+  Float_t    PhEta[25]               ;
+  Float_t    PhPhi[25]               ;
+  Float_t    MuPt[25]                ;
+  Float_t    MuEta[25]               ;
+  Float_t    MuPhi[25]               ;
+  Float_t    MetPt                   ; 
 
   // tree branches
   TBranch  *b_firedHLT_PFHT800_v2       ;
@@ -90,7 +90,7 @@ void SThist_data(std::string inFilename, std::string outFilename) {
   infile.open(inFilename.c_str()); 
   std::string buffer;
   const char *eosURL = "root://eoscms.cern.ch/";
-  chain.SetMakeClass(1);
+  //chain.SetMakeClass(1);
   while (std::getline(infile, buffer)) {
     std::string ntupleURL = eosURL + buffer; 
     chain.Add(ntupleURL.c_str());
