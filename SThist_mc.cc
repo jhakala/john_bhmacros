@@ -52,22 +52,23 @@ void SThist_mc(std::string inFilename, std::string outFilename) {
   int nPassedEvents = 0    ;
 
   // variables accessed from the tree
-  //Bool_t firedHLT_PFHT800_v2       ;
-  float    *JetPt   = new float[25];
-  float    *JetEta  = new float[25];
-  float    *JetPhi  = new float[25];
-  float    *ElePt   = new float[25];
-  float    *EleEta  = new float[25];
-  float    *ElePhi  = new float[25];
-  float    *PhPt    = new float[25];
-  float    *PhEta   = new float[25];
-  float    *PhPhi   = new float[25];
-  float    *MuPt    = new float[25];
-  float    *MuEta   = new float[25];
-  float    *MuPhi   = new float[25];
-  float    MetPt                   ; 
+  //Bool_t firedHLT_PFHT800_v2 ;
+  float    JetPt[25]           ;
+  float    JetEta[25]          ;
+  float    JetPhi[25]          ;
+  float    ElePt[25]           ;
+  float    EleEta[25]          ;
+  float    ElePhi[25]          ;
+  float    PhPt[25]            ;
+  float    PhEta[25]           ;
+  float    PhPhi[25]           ;
+  float    MuPt[25]            ;
+  float    MuEta[25]           ;
+  float    MuPhi[25]           ;
+  float    MetPt               ; 
 
   // tree branches
+  //TBranch  *b_firedHLT_PFHT800_v2       ;
   TBranch  *b_JetPt  ;
   TBranch  *b_JetEta ;
   TBranch  *b_JetPhi ;
@@ -80,6 +81,7 @@ void SThist_mc(std::string inFilename, std::string outFilename) {
   TBranch  *b_MuPt   ;
   TBranch  *b_MuEta  ;
   TBranch  *b_MuPhi  ;
+  TBranch  *b_MetPt  ;
 
   std::vector<std::vector<std::string> > samplesWeightsMap;
   std::vector<std::string> sampleWithWeight;
@@ -102,6 +104,7 @@ void SThist_mc(std::string inFilename, std::string outFilename) {
     cout << "Working on sample number " << iSample << endl;
     //create a one-element chain by looping over the input filename
     TChain chain("bhana/t");
+    chain.SetMakeClass(1);
     const char *eosURL = "root://eoscms.cern.ch/";
     std::string ntupleURL = eosURL + samplesWeightsMap[iSample][0]; 
     cout << "The ntuple URL is: " << ntupleURL << endl;
@@ -123,7 +126,7 @@ void SThist_mc(std::string inFilename, std::string outFilename) {
     chain.SetBranchAddress( "MuPt",   MuPt,   &b_MuPt   );
     chain.SetBranchAddress( "MuEta",  MuEta,  &b_MuEta  );
     chain.SetBranchAddress( "MuPhi",  MuPhi,  &b_MuPhi  );
-    chain.SetBranchAddress( "MetPt",  &MetPt  );
+    chain.SetBranchAddress( "MetPt",  &MetPt, &b_MetPt  );
 
     const int nEvents = chain.GetEntries();
     cout << "Number of events in this sample is: " << nEvents << endl;
@@ -148,7 +151,7 @@ void SThist_mc(std::string inFilename, std::string outFilename) {
 
       // apply isolation requirement and calculate ST.
       //cout << "For event number " << iEvent << endl;
-      for (int iJet = 0; iJet < 25; ++iJet) {
+      for (int iJet = 0; iJet < 15; ++iJet) {
         if (JetPt[iJet]>20.) {
           for (int iElectron = 0; iElectron < 25; ++iElectron ) {
             if (dR(JetEta[iJet],JetPhi[iJet], EleEta[iElectron], ElePhi[iElectron]) < 0.3) {
@@ -182,7 +185,7 @@ void SThist_mc(std::string inFilename, std::string outFilename) {
       }
       for (int iElectron = 0; iElectron < 25; ++iElectron) {
         if (ElePt[iElectron]>20.) {
-          for (int iJet = 0; iJet < 25; ++iJet ) {
+          for (int iJet = 0; iJet < 15; ++iJet ) {
             if (dR(EleEta[iElectron],ElePhi[iElectron], JetEta[iJet], JetPhi[iJet]) < 0.3) {
               passIso = false;
               break;
@@ -214,7 +217,7 @@ void SThist_mc(std::string inFilename, std::string outFilename) {
       }
       for (int iPhoton = 0; iPhoton < 25; ++iPhoton) {
         if (PhPt[iPhoton]>20.) {
-          for (int iJet = 0; iJet < 25; ++iJet ) {
+          for (int iJet = 0; iJet < 15; ++iJet ) {
             if (dR(PhEta[iPhoton],PhPhi[iPhoton], JetEta[iJet], JetPhi[iJet]) < 0.3) {
               passIso = false;
               break;
@@ -246,7 +249,7 @@ void SThist_mc(std::string inFilename, std::string outFilename) {
       }
       for (int iMuon = 0; iMuon < 25; ++iMuon) {
         if (MuPt[iMuon]>20.) {
-          for (int iJet = 0; iJet < 25; ++iJet ) {
+          for (int iJet = 0; iJet < 15; ++iJet ) {
             if (dR(MuEta[iMuon],MuPhi[iMuon], JetEta[iJet], JetPhi[iJet]) < 0.3) {
               passIso = false;
               break;
@@ -297,20 +300,6 @@ void SThist_mc(std::string inFilename, std::string outFilename) {
     stExcHist[iHist]->Write();
     stIncHist[iHist]->Write();
   }
-  //
-  // clean up
-  delete[] JetPt;
-  delete[] JetEta;
-  delete[] JetPhi;
-  delete[] ElePt;
-  delete[] EleEta;
-  delete[] ElePhi;
-  delete[] PhPt;
-  delete[] PhEta;
-  delete[] PhPhi;
-  delete[] MuPt;
-  delete[] MuEta;
-  delete[] MuPhi;
 }
 
 // function to calculate dR between two objects
