@@ -15,15 +15,16 @@ void look2(std::string inFilename, std::string outFilename);
 float dR(float eta1, float phi1, float eta2, float phi2);
 
 void look2(std::string inFilename, std::string outFilename) {
-  bool debugFlag     = false ;
+  bool debugFlag     = true ;
   int  eventsToDump  = 10    ;  // if debugFlag is true, then stop once the number of dumped events reaches eventsToDump
-  bool dumpBigEvents = true  ;
-  bool dumpIsoInfo   = true  ;
+  bool dumpBigEvents = false  ;
+  bool dumpIsoInfo   = false  ;
   int  nDumpedEvents = 0     ;
 
   // define output textfile
-  ofstream outFile;
-  outFile.open(outFilename.c_str());
+  ofstream outTextFile;
+  std::string outTextFilename  = outFilename+"_log.tx";
+  outTextFile.open(outTextFilename.c_str());
 
   // define output histograms
   TH2F METvsMHT                = TH2F("METvsMHT"                ,  "METvsMHT"                ,  1000,  0.,  20000.,  1000,  0.,  20000.);
@@ -102,34 +103,43 @@ void look2(std::string inFilename, std::string outFilename) {
   float JetPhotonEt     = 0.            ;
 
   // variables accessed from the tree
-  Bool_t firedHLT_PFHT800_v2       ;
-  Bool_t passed_CSCTightHaloFilter ;
-  Bool_t passed_goodVertices       ;
-  Bool_t passed_eeBadScFilter      ;
-  int    runno                     ;
-  int    evtno                     ;
-  int    lumiblock                 ;
-  float  JetEt [25]                ;
-  float  JetPx [25]                ;
-  float  JetPy [25]                ;
-  float  JetEta[25]                ;
-  float  JetPhi[25]                ;
-  float  EleEt[25]                 ;
-  float  ElePx[25]                 ;
-  float  ElePy[25]                 ;
-  float  EleEta[25]                ;
-  float  ElePhi[25]                ;
-  float  PhEt[25]                  ;
-  float  PhPx[25]                  ;
-  float  PhPy[25]                  ;
-  float  PhEta[25]                 ;
-  float  PhPhi[25]                 ;
-  float  MuEt[25]                  ;
-  float  MuPx[25]                  ;
-  float  MuPy[25]                  ;
-  float  MuEta[25]                 ;
-  float  MuPhi[25]                 ;
-  float  Met                       ;
+  Bool_t     firedHLT_PFHT800_v2       ;
+  Bool_t     passed_CSCTightHaloFilter ;
+  Bool_t     passed_goodVertices       ;
+  Bool_t     passed_eeBadScFilter      ;
+  int        runno                     ;
+  long long  evtno                     ;
+  int        lumiblock                 ;
+  float      JetEt [25]                ;
+  float      JetPx [25]                ;
+  float      JetPy [25]                ;
+  float      JetEta[25]                ;
+  float      JetPhi[25]                ;
+  float      JetNeutHadFrac[25]        ;
+  float      JetNeutEMFrac[25]         ;
+  float      JetChgHadFrac[25]         ;
+  float      JetMuFrac[25]             ;
+  float      JetChgEMFrac[25]          ;
+  int        JetNConstituents[25]      ;
+  int        JetNNeutConstituents[25]  ;
+  int        JetNChgConstituents[25]   ;
+  float      EleEt[25]                 ;
+  float      ElePx[25]                 ;
+  float      ElePy[25]                 ;
+  float      EleEta[25]                ;
+  float      ElePhi[25]                ;
+  float      PhEt[25]                  ;
+  float      PhPx[25]                  ;
+  float      PhPy[25]                  ;
+  float      PhEta[25]                 ;
+  float      PhPhi[25]                 ;
+  float      MuEt[25]                  ;
+  float      MuPx[25]                  ;
+  float      MuPy[25]                  ;
+  float      MuEta[25]                 ;
+  float      MuPhi[25]                 ;
+  float      MuPFdBiso[25]             ;
+  float      Met                       ;
 
   // tree branches
   TBranch  *b_firedHLT_PFHT800_v2       ;
@@ -141,6 +151,14 @@ void look2(std::string inFilename, std::string outFilename) {
   TBranch  *b_JetPy                     ;
   TBranch  *b_JetEta                    ;
   TBranch  *b_JetPhi                    ;
+  TBranch  *b_JetNeutHadFrac            ;
+  TBranch  *b_JetNeutEMFrac             ;
+  TBranch  *b_JetChgHadFrac             ;
+  TBranch  *b_JetMuFrac                 ;
+  TBranch  *b_JetChgEMFrac              ;
+  TBranch  *b_JetNConstituents          ;
+  TBranch  *b_JetNNeutConstituents      ;
+  TBranch  *b_JetNChgConstituents       ;
   TBranch  *b_EleEt                     ;
   TBranch  *b_ElePx                     ;
   TBranch  *b_ElePy                     ;
@@ -156,6 +174,7 @@ void look2(std::string inFilename, std::string outFilename) {
   TBranch  *b_MuPy                      ;
   TBranch  *b_MuEta                     ;
   TBranch  *b_MuPhi                     ;
+  TBranch  *b_MuPFdBiso                 ;
   TBranch  *b_Met                       ;
   TBranch  *b_runno                     ;
   TBranch  *b_evtno                     ;
@@ -170,41 +189,48 @@ void look2(std::string inFilename, std::string outFilename) {
   //chain.SetMakeClass(1);
   //while (std::getline(infile, buffer)) {
   //  std::string ntupleURL = eosURL + buffer;
-    chain.Add(inFilename.c_str());
+  chain.Add(inFilename.c_str());
   //}
 
   cout << "Opened chain: " << chain.GetName() << endl;
 
   // set all branch addresses
-  chain.SetBranchAddress( "firedHLT_PFHT800_v2"       , &firedHLT_PFHT800_v2       , &b_firedHLT_PFHT800_v2       );
-  chain.SetBranchAddress("passed_CSCTightHaloFilter"  , &passed_CSCTightHaloFilter , &b_passed_CSCTightHaloFilter );
-  chain.SetBranchAddress("passed_goodVertices"        , &passed_goodVertices       , &b_passed_goodVertices       );
-  chain.SetBranchAddress("passed_eeBadScFilter"       , &passed_eeBadScFilter      , &b_passed_eeBadScFilter      );
-
-  chain.SetBranchAddress( "runno",      &runno,     &b_runno      );
-  chain.SetBranchAddress( "lumiblock",  &lumiblock, &b_lumiblock  );
-  chain.SetBranchAddress( "evtno",      &evtno,     &b_evtno      );
-  chain.SetBranchAddress( "JetEt",      JetEt,      &b_JetEt      );
-  chain.SetBranchAddress( "JetPx",      JetPx,      &b_JetPx      );
-  chain.SetBranchAddress( "JetPy",      JetPy,      &b_JetPy      );
-  chain.SetBranchAddress( "JetEta",     JetEta,     &b_JetEta     );
-  chain.SetBranchAddress( "JetPhi",     JetPhi,     &b_JetPhi     );
-  chain.SetBranchAddress( "EleEt",      EleEt,      &b_EleEt      );
-  chain.SetBranchAddress( "ElePx",      ElePx,      &b_ElePx      );
-  chain.SetBranchAddress( "ElePy",      ElePy,      &b_ElePy      );
-  chain.SetBranchAddress( "EleEta",     EleEta,     &b_EleEta     );
-  chain.SetBranchAddress( "ElePhi",     ElePhi,     &b_ElePhi     );
-  chain.SetBranchAddress( "PhEt",       PhEt,       &b_PhEt       );
-  chain.SetBranchAddress( "PhPx",       PhPx,       &b_PhPx       );
-  chain.SetBranchAddress( "PhPy",       PhPy,       &b_PhPy       );
-  chain.SetBranchAddress( "PhEta",      PhEta,      &b_PhEta      );
-  chain.SetBranchAddress( "PhPhi",      PhPhi,      &b_PhPhi      );
-  chain.SetBranchAddress( "MuEt",       MuEt,       &b_MuEt       );
-  chain.SetBranchAddress( "MuPx",       MuPx,       &b_MuPx       );
-  chain.SetBranchAddress( "MuPy",       MuPy,       &b_MuPy       );
-  chain.SetBranchAddress( "MuEta",      MuEta,      &b_MuEta      );
-  chain.SetBranchAddress( "MuPhi",      MuPhi,      &b_MuPhi      );
-  chain.SetBranchAddress( "Met",        &Met,       &b_Met        );
+  chain.SetBranchAddress( "firedHLT_PFHT800_v2"       ,  &firedHLT_PFHT800_v2       ,  &b_firedHLT_PFHT800_v2       );
+  chain.SetBranchAddress( "passed_CSCTightHaloFilter" ,  &passed_CSCTightHaloFilter ,  &b_passed_CSCTightHaloFilter );
+  chain.SetBranchAddress( "passed_goodVertices"       ,  &passed_goodVertices       ,  &b_passed_goodVertices       );
+  chain.SetBranchAddress( "passed_eeBadScFilter"      ,  &passed_eeBadScFilter      ,  &b_passed_eeBadScFilter      );
+  chain.SetBranchAddress( "runno"                     ,  &runno                     ,  &b_runno                     );
+  chain.SetBranchAddress( "lumiblock"                 ,  &lumiblock                 ,  &b_lumiblock                 );
+  chain.SetBranchAddress( "evtno"                     ,  &evtno                     ,  &b_evtno                     );
+  chain.SetBranchAddress( "JetEt"                     ,  JetEt                      ,  &b_JetEt                     );
+  chain.SetBranchAddress( "JetPx"                     ,  JetPx                      ,  &b_JetPx                     );
+  chain.SetBranchAddress( "JetPy"                     ,  JetPy                      ,  &b_JetPy                     );
+  chain.SetBranchAddress( "JetEta"                    ,  JetEta                     ,  &b_JetEta                    );
+  chain.SetBranchAddress( "JetPhi"                    ,  JetPhi                     ,  &b_JetPhi                    );
+  chain.SetBranchAddress( "JetNeutHadFrac"            ,  JetNeutHadFrac             ,  &b_JetNeutHadFrac            );
+  chain.SetBranchAddress( "JetNeutEMFrac"             ,  JetNeutEMFrac              ,  &b_JetNeutEMFrac             );
+  chain.SetBranchAddress( "JetChgHadFrac"             ,  JetChgHadFrac              ,  &b_JetChgHadFrac             );
+  chain.SetBranchAddress( "JetMuFrac"                 ,  JetMuFrac                  ,  &b_JetMuFrac                 );
+  chain.SetBranchAddress( "JetChgEMFrac"              ,  JetChgEMFrac               ,  &b_JetChgEMFrac              );
+  chain.SetBranchAddress( "JetNConstituents"          ,  JetNConstituents           ,  &b_JetNConstituents          );
+  chain.SetBranchAddress( "JetNNeutConstituents"      ,  JetNNeutConstituents       ,  &b_JetNNeutConstituents      );
+  chain.SetBranchAddress( "JetNChgConstituents"       ,  JetNChgConstituents        ,  &b_JetNChgConstituents       );
+  chain.SetBranchAddress( "EleEt"                     ,  EleEt                      ,  &b_EleEt                     );
+  chain.SetBranchAddress( "ElePx"                     ,  ElePx                      ,  &b_ElePx                     );
+  chain.SetBranchAddress( "ElePy"                     ,  ElePy                      ,  &b_ElePy                     );
+  chain.SetBranchAddress( "EleEta"                    ,  EleEta                     ,  &b_EleEta                    );
+  chain.SetBranchAddress( "ElePhi"                    ,  ElePhi                     ,  &b_ElePhi                    );
+  chain.SetBranchAddress( "PhEt"                      ,  PhEt                       ,  &b_PhEt                      );
+  chain.SetBranchAddress( "PhPx"                      ,  PhPx                       ,  &b_PhPx                      );
+  chain.SetBranchAddress( "PhPy"                      ,  PhPy                       ,  &b_PhPy                      );
+  chain.SetBranchAddress( "PhEta"                     ,  PhEta                      ,  &b_PhEta                     );
+  chain.SetBranchAddress( "PhPhi"                     ,  PhPhi                      ,  &b_PhPhi                     );
+  chain.SetBranchAddress( "MuEt"                      ,  MuEt                       ,  &b_MuEt                      );
+  chain.SetBranchAddress( "MuPx"                      ,  MuPx                       ,  &b_MuPx                      );
+  chain.SetBranchAddress( "MuPy"                      ,  MuPy                       ,  &b_MuPy                      );
+  chain.SetBranchAddress( "MuEta"                     ,  MuEta                      ,  &b_MuEta                     );
+  chain.SetBranchAddress( "MuPhi"                     ,  MuPhi                      ,  &b_MuPhi                     );
+  chain.SetBranchAddress( "Met"                       ,  &Met                       ,  &b_Met                       );
 
   const int nEvents = chain.GetEntries();
   cout << "Number of events in chain is: " << nEvents << endl;
@@ -261,7 +287,7 @@ void look2(std::string inFilename, std::string outFilename) {
                 passIso = false;
                 if (dumpIsoInfo) {
                   sprintf(messageBuffer, "Jet number %d failed isolation with Muon number %d  in run number %d lumi section %d event number %d\n", iJet, iMuon, runno, lumiblock, evtno);
-                  outFile << messageBuffer;
+                  outTextFile << messageBuffer;
                 }
                 break;
               }
@@ -293,7 +319,7 @@ void look2(std::string inFilename, std::string outFilename) {
                 passIso = false;
                 if (dumpIsoInfo) {
                   sprintf(messageBuffer, "Jet number %d failed isolation with Electron number %d  in run number %d lumi section %d event number %d\n", iJet, iElectron, runno, lumiblock, evtno);
-                  outFile << messageBuffer;
+                  outTextFile << messageBuffer;
                 }
                 break;
               }
@@ -325,7 +351,7 @@ void look2(std::string inFilename, std::string outFilename) {
                 passIso = false;
                 if (dumpIsoInfo) {
                   sprintf(messageBuffer, "Jet number %d failed isolation with Photon number %d  in run number %d lumi section %d event number %d\n", iJet, iPhoton, runno, lumiblock, evtno);
-                  outFile << messageBuffer;
+                  outTextFile << messageBuffer;
                 }
                 break;
               }
@@ -339,13 +365,13 @@ void look2(std::string inFilename, std::string outFilename) {
         multiplicity+=1;
         if (debugFlag && dumpIsoInfo) {
           sprintf(messageBuffer, "Jet number %d passed isolation in run number %d lumi section %d event number %d.\n       It had Px=%f and Py=%f\n", iJet, runno, lumiblock, evtno, JetPx[iJet], JetPy[iJet]);
-          outFile << messageBuffer;
+          outTextFile << messageBuffer;
         }
         Px += JetPx[iJet];
         Py += JetPy[iJet];
         if (debugFlag && dumpIsoInfo) {
           sprintf(messageBuffer, "   Cumulative: Px=%f and Py=%f\n", Px, Py);
-          outFile << messageBuffer;
+          outTextFile << messageBuffer;
         }
       }
       else break;
@@ -362,7 +388,7 @@ void look2(std::string inFilename, std::string outFilename) {
                 passIso = false;
                 if (dumpIsoInfo) {
                   sprintf(messageBuffer, "Electron number %d failed isolation with Jet number %d  in run number %d lumi section %d event number %d\n", iElectron, iJet, runno, lumiblock, evtno);
-                  outFile << messageBuffer;
+                  outTextFile << messageBuffer;
                 }
                 break;
               }
@@ -375,21 +401,21 @@ void look2(std::string inFilename, std::string outFilename) {
           //  if (PhEt[iPhoton]>50 && dR(EleEta[iElectron],ElePhi[iElectron], PhEta[iPhoton], PhPhi[iPhoton]) < 0.3) {
           //    if (dumpIsoInfo) {
           //      sprintf(messageBuffer, "Electron number %d failed isolation with Photon number %d  in run number %d lumi section %d event number %d\n", iElectron, iPhoton, runno, lumiblock, evtno);
-          //      outFile << messageBuffer;
+          //      outTextFile << messageBuffer;
           //    }
           //    passIso = false;
           //    break;
           //  }
           //}
           //if (!passIso) continue;
-         
+
           // Throw away electron if there's an electron/muon overlap.
           for (int iMuon = 0; iMuon < 25; ++iMuon ) {
             if (MuEt[iMuon]>50 && dR(EleEta[iElectron],ElePhi[iElectron], MuEta[iMuon], MuPhi[iMuon]) < 0.3) {
               passIso = false;
               if (dumpIsoInfo) {
                 sprintf(messageBuffer, "Electron number %d failed isolation with Muon number %d  in run number %d lumi section %d event number %d\n", iElectron, iMuon, runno, lumiblock, evtno);
-                outFile << messageBuffer;
+                outTextFile << messageBuffer;
               }
               break;
             }
@@ -401,13 +427,13 @@ void look2(std::string inFilename, std::string outFilename) {
           multiplicity+=1;
           if (debugFlag && dumpIsoInfo) {
             sprintf(messageBuffer, "Ele number %d passed isolation in run number %d lumi section %d event number %d.      \n It had Px=%f and Py=%f\n", iElectron, runno, lumiblock, evtno, ElePx[iElectron], ElePy[iElectron]);
-            outFile << messageBuffer;
+            outTextFile << messageBuffer;
           }
           Px += ElePx[iElectron];
           Py += ElePy[iElectron];
           if (debugFlag && dumpIsoInfo) {
             sprintf(messageBuffer, "   Cumulative: Px=%f and Py=%f\n", Px, Py);
-            outFile << messageBuffer;
+            outTextFile << messageBuffer;
           }
         }
         else break;
@@ -425,7 +451,7 @@ void look2(std::string inFilename, std::string outFilename) {
                 passIso = false;
                 if (dumpIsoInfo) {
                   sprintf(messageBuffer, "Photon number %d failed isolation with Jet number %d  in run number %d lumi section %d event number %d\n", iPhoton, iJet, runno, lumiblock, evtno);
-                  outFile << messageBuffer;
+                  outTextFile << messageBuffer;
                 }
                 break;
               }
@@ -438,20 +464,20 @@ void look2(std::string inFilename, std::string outFilename) {
             if (MuEt[iMuon]>50 && dR(PhEta[iPhoton], PhPhi[iPhoton], MuEta[iMuon], MuPhi[iMuon]) < 0.3) {
               if (dumpIsoInfo) {
                 sprintf(messageBuffer, "Photon number %d failed isolation with Muon number %d  in run number %d lumi section %d event number %d\n", iPhoton, iMuon, runno, lumiblock, evtno);
-                outFile << messageBuffer;
+                outTextFile << messageBuffer;
               }
               passIso = false;
               break;
             }
           }
           if (!passIso) continue;
-          
+
           // Throw out photon if there's a photon/electron overlap
           for (int iElectron = 0; iElectron < 25; ++iElectron ) {
             if (EleEt[iElectron]>50 && dR(PhEta[iPhoton], PhPhi[iPhoton], EleEta[iElectron], ElePhi[iElectron]) < 0.3) {
               if (dumpIsoInfo) {
                 sprintf(messageBuffer, "Photon number %d failed isolation with Electron number %d  in run number %d lumi section %d event number %d\n", iPhoton, iElectron, runno, lumiblock, evtno);
-                outFile << messageBuffer;
+                outTextFile << messageBuffer;
               }
               passIso = false;
               break;
@@ -464,13 +490,13 @@ void look2(std::string inFilename, std::string outFilename) {
           multiplicity+=1;
           if (debugFlag && dumpIsoInfo) {
             sprintf(messageBuffer, "Photon number %d passed isolation in run number %d lumi section %d event number %d.\n      It had Px=%f and Py=%f\n", iPhoton, runno, lumiblock, evtno, PhPx[iPhoton], PhPy[iPhoton]);
-            outFile << messageBuffer;
+            outTextFile << messageBuffer;
           }
           Px += PhPx[iPhoton];
           Py += PhPy[iPhoton];
           if (debugFlag && dumpIsoInfo) {
             sprintf(messageBuffer, "   Cumulative: Px=%f and Py=%f\n", Px, Py);
-            outFile << messageBuffer;
+            outTextFile << messageBuffer;
           }
         }
         else break;
@@ -487,13 +513,13 @@ void look2(std::string inFilename, std::string outFilename) {
           multiplicity+=1;
           if (debugFlag && dumpIsoInfo) {
             sprintf(messageBuffer, "Muon number %d passed isolation in run number %d lumi section %d event number %d.\n       It had Px=%f and Py=%f\n", iMuon, runno, lumiblock, evtno, MuPx[iMuon], MuPy[iMuon]);
-            outFile << messageBuffer;
+            outTextFile << messageBuffer;
           }
           Px += MuPx[iMuon];
           Py += MuPy[iMuon];
           if (debugFlag && dumpIsoInfo) {
             sprintf(messageBuffer, "   Cumulative: Px=%f and Py=%f\n", Px, Py);
-            outFile << messageBuffer;
+            outTextFile << messageBuffer;
           }
         }
         else break;
@@ -527,7 +553,7 @@ void look2(std::string inFilename, std::string outFilename) {
     }
     if (dumpIsoInfo && fabs(OurMet-Met)>300) {
       sprintf(messageBuffer, "MET-MHT is %f in run number %d lumi section %d event number %d. ST is %f and multiplicity is %d\n", Met-OurMet, runno, lumiblock, evtno, ST, multiplicity);
-      outFile << messageBuffer;
+      outTextFile << messageBuffer;
       if (debugFlag) cout << messageBuffer;
     }
 
@@ -537,7 +563,7 @@ void look2(std::string inFilename, std::string outFilename) {
       if (debugFlag) cout << "In run number " << runno << " lumi section " << lumiblock << " event number " << evtno << " ST is:" << ST << endl;
       if (dumpIsoInfo) {
         sprintf(messageBuffer, "In run number %d lumi section %d event number %d ST is %f and multiplicity is %d\n", runno, lumiblock, evtno, ST, multiplicity);
-        outFile << messageBuffer;
+        outTextFile << messageBuffer;
       }
       if (debugFlag) cout << messageBuffer;
 
@@ -545,53 +571,58 @@ void look2(std::string inFilename, std::string outFilename) {
       for (int j=0; j<25; ++j) {
         if(debugFlag && dumpIsoInfo && JetEt[j]>0.000) {
           sprintf(messageBuffer, "    Jet %d has Et=%f, Px=%f, Py=%f, Eta=%f, Phi=%f\n", j, JetEt[j], JetPx[j], JetPy[j], JetEta[j], JetPhi[j]);
-          outFile << messageBuffer;
+          outTextFile << messageBuffer;
         }
         if (debugFlag) cout  << messageBuffer;
       }
       for (int j=0; j<25; ++j) {
         if(debugFlag && dumpIsoInfo && EleEt[j]>0.000) {
           sprintf(messageBuffer, "    Ele %d has Et=%f, Px=%f, Py=%f, Eta=%f, Phi=%f\n", j, EleEt[j], ElePx[j], ElePy[j], EleEta[j], ElePhi[j]);
-          outFile << messageBuffer;
+          outTextFile << messageBuffer;
         }
         if (debugFlag) cout  << messageBuffer;
       }
       for (int j=0; j<25; ++j) {
         if(debugFlag && dumpIsoInfo && PhEt[j]>0.000) {
           sprintf(messageBuffer, "    Ph %d has Et=%f, Px=%f, Py=%f, Eta=%f, Phi=%f\n", j, PhEt[j], PhPx[j], PhPy[j], PhEta[j], PhPhi[j]);
-          outFile << messageBuffer;
+          outTextFile << messageBuffer;
         }
         if (debugFlag) cout  << messageBuffer;
       }
       for (int j=0; j<25; ++j) {
         if(debugFlag && dumpIsoInfo && MuEt[j]>0.000) {
           sprintf(messageBuffer, "    Mu %d has Et=%f, Px=%f, Py=%f, Eta=%f, Phi=%f\n", j, MuEt[j], MuPx[j], MuPy[j], MuEta[j], MuPhi[j]);
-          outFile << messageBuffer;
+          outTextFile << messageBuffer;
         }
         if (debugFlag) cout  << messageBuffer;
       }
       if (debugFlag && dumpIsoInfo) {
         sprintf(messageBuffer, "    our Px is=%f\n", Px);
-        outFile << messageBuffer;
+        outTextFile << messageBuffer;
         sprintf(messageBuffer, "    our Py is=%f\n", Py);
-        outFile << messageBuffer;
+        outTextFile << messageBuffer;
         sprintf(messageBuffer, "    our MHT is=%f\n", OurMet);
-        outFile << messageBuffer;
+        outTextFile << messageBuffer;
         sprintf(messageBuffer, "    MET is=%f\n", Met);
-        outFile << messageBuffer;
+        outTextFile << messageBuffer;
         if (debugFlag) cout  << messageBuffer;
         nDumpedEvents+=1;
         sprintf(messageBuffer, "\n\n\n\n");
-        outFile << messageBuffer;
+        outTextFile << messageBuffer;
       }
     }
     if (debugFlag && nDumpedEvents==eventsToDump) break;
   }
   // write output textfile
-  outFile.close();
+  outTextFile.close();
   // write output root file
-  TFile* outRootFile = new TFile("METvsMHTandSTdists.root", "RECREATE");
+  TFile* outRootFile = new TFile(outFilename.c_str(), "RECREATE");
   outRootFile->cd();
+  outRootFile->mkdir("ST");
+  outRootFile->mkdir("MET-MHT");
+  outRootFile->mkdir("Isolation");
+
+  outRootFile->cd("ST");
   stHist.Write();
   for (int iHist = 0; iHist<multMax-2; ++iHist) {
     stExcHist[iHist]->Write();
@@ -602,12 +633,16 @@ void look2(std::string inFilename, std::string outFilename) {
     stExcHistMHT[iHist]->Write();
     stIncHistMHT[iHist]->Write();
   }
+
+  outRootFile->cd("MET-MHT");
   METvsMHT.Write();
   METvsMHTinc2.Write();
   METvsMHTinc2hasMuon.Write();
   METvsMHTinc2hasPhoton.Write();
   METvsMHTinc2hasElectron.Write();
   METvsMHTinc2onlyJets.Write();
+
+  outRootFile->cd("Isolation");
   MuonJetIso1.Write();
   MuonJetIso2.Write();
   MuonJetIso3.Write();
@@ -632,6 +667,7 @@ void look2(std::string inFilename, std::string outFilename) {
   PhotonJetoverlapdR2.Write();
   PhotonJetoverlapdR3.Write();
   PhotonJetoverlapdR4.Write();
+
   outRootFile->Close();
 }
 
