@@ -252,7 +252,7 @@ void look2(std::string inFilename, std::string outFilename) {
     chain.GetEntry(iEvent);
     // apply trigger and filter requirements
     if (    !firedHLT_PFHT800_v2 || !passed_CSCTightHaloFilter
-        || !passed_goodVertices || !passed_eeBadScFilter      ) continue;
+         || !passed_goodVertices || !passed_eeBadScFilter      ) continue;
 
     // apply isolation requirement and calculate ST and MHT.
     //Jets
@@ -263,7 +263,7 @@ void look2(std::string inFilename, std::string outFilename) {
       JetPhotonEt   =0;
       if (JetEt[iJet]>50.) {
         for (int iMuon = 0; iMuon < 25; ++iMuon ) {
-          if (MuEt[iMuon]>50) {
+          if (MuEt[iMuon]>50 && MuPFdBiso[iMuon]<0.15) {
             eventHasMuon = true;
             if (JetEt[iJet] && dR(JetEta[iJet],JetPhi[iJet], MuEta[iMuon], MuPhi[iMuon]) < 0.3) {
               JetMuonEt+=MuEt[iMuon];
@@ -411,7 +411,7 @@ void look2(std::string inFilename, std::string outFilename) {
 
           // Throw away electron if there's an electron/muon overlap.
           for (int iMuon = 0; iMuon < 25; ++iMuon ) {
-            if (MuEt[iMuon]>50 && dR(EleEta[iElectron],ElePhi[iElectron], MuEta[iMuon], MuPhi[iMuon]) < 0.3) {
+            if (MuEt[iMuon]>50 && MuPFdBiso[iMuon]<0.15 && dR(EleEta[iElectron],ElePhi[iElectron], MuEta[iMuon], MuPhi[iMuon]) < 0.3) {
               passIso = false;
               if (dumpIsoInfo) {
                 sprintf(messageBuffer, "Electron number %d failed isolation with Muon number %d  in run number %d lumi section %d event number %d\n", iElectron, iMuon, runno, lumiblock, evtno);
@@ -461,7 +461,7 @@ void look2(std::string inFilename, std::string outFilename) {
 
           // Throw out photon if there's a photon/muon overlap
           for (int iMuon = 0; iMuon < 25; ++iMuon ) {
-            if (MuEt[iMuon]>50 && dR(PhEta[iPhoton], PhPhi[iPhoton], MuEta[iMuon], MuPhi[iMuon]) < 0.3) {
+            if (MuEt[iMuon]>50 && MuPFdBiso[iMuon]<0.15 && dR(PhEta[iPhoton], PhPhi[iPhoton], MuEta[iMuon], MuPhi[iMuon]) < 0.3) {
               if (dumpIsoInfo) {
                 sprintf(messageBuffer, "Photon number %d failed isolation with Muon number %d  in run number %d lumi section %d event number %d\n", iPhoton, iMuon, runno, lumiblock, evtno);
                 outTextFile << messageBuffer;
@@ -507,7 +507,7 @@ void look2(std::string inFilename, std::string outFilename) {
     if (eventHasMuon) {
       for (int iMuon = 0; iMuon < 25; ++iMuon) {
         passIso=true;
-        if (MuEt[iMuon]>50.) {
+        if (MuEt[iMuon]>50. && MuPFdBiso[iMuon]<0.15) {
           if (debugFlag) cout << "    MuEt for muon number " << iMuon << " is: " << MuEt[iMuon] << endl;
           ST += MuEt[iMuon];
           multiplicity+=1;
